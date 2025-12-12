@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EU License Plate Generator
+
+A Next.js application for generating EU license plates as PNG images.
+
+## Features
+
+- 🇩🇪 **German License Plates**: Full support for German Kennzeichen
+- 🏛️ **State Plakette**: Option to add the Landeswappen (state coat of arms)
+- 🔄 **HU Plakette**: Option to add the TÜV/HU sticker with configurable year and month
+- 📐 **Selectable Width**: Choose between standard (520mm) and compact width
+- 🎨 **EuroPlate Font**: Authentic appearance with the official EuroPlate typeface
+- 📥 **PNG Export**: Export at 420×100-200px (aspect ratio dependent)
+
+## Technology Stack
+
+- **Framework**: Next.js 16 with App Router
+- **Language**: TypeScript
+- **UI**: React 18+ with Tailwind CSS
+- **Font**: EuroPlate TTF
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ installed
+- npm or yarn
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app will be available at [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. **Configure the plate**: Enter city code (e.g., M, B, HH), letters, and numbers
+2. **Select state**: Choose the German Bundesland for the state plakette
+3. **Set HU date**: Configure year and month for the HU (TÜV) plakette
+4. **Choose width**: Standard (520mm) or compact
+5. **Toggle options**: Show/hide state plakette and HU plakette
+6. **Export**: Click "Als PNG exportieren" to download the image
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License Plate Specifications
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Standard width**: 520mm
+- **Height**: 110mm
+- **Export dimensions**: 420 × 100-200 pixels (depending on aspect ratio)
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/
+│   ├── globals.css      # Global styles + EuroPlate font
+│   ├── layout.tsx       # Root layout
+│   └── page.tsx         # Main page
+├── components/
+│   ├── EUBand.tsx       # Blue EU band with stars
+│   ├── StatePlakette.tsx # German state coat of arms
+│   ├── HUPlakette.tsx   # TÜV inspection sticker
+│   ├── LicensePlate.tsx # Main plate component
+│   └── PlateGenerator.tsx # Full UI with controls
+└── types/
+    └── plate.ts         # TypeScript types
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
