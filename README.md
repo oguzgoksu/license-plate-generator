@@ -2,6 +2,10 @@
 
 A Next.js application for generating EU license plates as PNG images.
 
+**🌐 [Try it live](https://license-plate.niklas.top)**
+
+![License Plate Generator](.github/image.png)
+
 ## Features
 
 - 🇩🇪 **German License Plates**: Full support for German Kennzeichen
@@ -79,4 +83,4 @@ src/
 
 ## License
 
-MIT
+[PolyForm Noncommercial 1.0.0](LICENSE) – Free for personal use, no commercial redistribution.
