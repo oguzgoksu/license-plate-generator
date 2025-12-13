@@ -224,8 +224,10 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
       fontFamily: 'EuroPlate, sans-serif',
     };
     
-    // Carbon fiber pattern - diagonal stripes
-    const stripeWidth = 2 * scale;
+    // Carbon fiber pattern - woven checkerboard
+    const patternSize = 8 * scale;
+    const lineSize = 2 * scale;
+    const halfPattern = patternSize / 2;
     
     const textStyle: React.CSSProperties = styles.isCarbon 
       ? {
@@ -242,31 +244,28 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                 rgba(255,255,255,0.15) 80%,
                 rgba(255,255,255,0.35) 100%
               ),
-              repeating-linear-gradient(
-                -45deg,
-                #222 0px,
-                #222 ${stripeWidth}px,
-                #444 ${stripeWidth}px,
-                #444 ${stripeWidth * 2}px,
-                #222 ${stripeWidth * 2}px,
-                #222 ${stripeWidth * 3}px,
-                #333 ${stripeWidth * 3}px,
-                #333 ${stripeWidth * 4}px
-              )
+              linear-gradient(27deg, #151515 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(207deg, #151515 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(27deg, #222 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(207deg, #222 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(90deg, #1b1b1b ${halfPattern}px, transparent ${halfPattern}px),
+              linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424)
             `
             : `
-              repeating-linear-gradient(
-                -45deg,
-                #0a0a0a 0px,
-                #0a0a0a ${stripeWidth}px,
-                #1a1a1a ${stripeWidth}px,
-                #1a1a1a ${stripeWidth * 2}px,
-                #0a0a0a ${stripeWidth * 2}px,
-                #0a0a0a ${stripeWidth * 3}px,
-                #151515 ${stripeWidth * 3}px,
-                #151515 ${stripeWidth * 4}px
-              )
+              linear-gradient(27deg, #0a0a0a ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(207deg, #0a0a0a ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(27deg, #151515 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(207deg, #151515 ${lineSize}px, transparent ${lineSize}px),
+              linear-gradient(90deg, #0e0e0e ${halfPattern}px, transparent ${halfPattern}px),
+              linear-gradient(#0f0f0f 25%, #0a0a0a 25%, #0a0a0a 50%, transparent 50%, transparent 75%, #121212 75%, #121212)
             `,
+          backgroundSize: styles.isGlossy 
+            ? `100% 100%, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px`
+            : `${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px, ${patternSize}px ${patternSize}px`,
+          backgroundPosition: styles.isGlossy
+            ? `0 0, 0 ${lineSize}px, ${halfPattern}px 0px, 0px ${halfPattern}px, ${halfPattern}px ${lineSize}px, 0 0, 0 0`
+            : `0 ${lineSize}px, ${halfPattern}px 0px, 0px ${halfPattern}px, ${halfPattern}px ${lineSize}px, 0 0, 0 0`,
+          backgroundColor: styles.isGlossy ? '#131313' : '#080808',
           backgroundClip: 'text',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -420,7 +419,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               padding: country === 'A' ? `0 ${3 * scale}px` : '0',
               zIndex: 2,
             }}>
-              <EUBand scale={scale} countryCode={country} height={country === 'A' ? '100%' : undefined} noBorderRadius={country === 'A'} />
+              <EUBand scale={scale} countryCode={country} height={country === 'A' ? '100%' : undefined} noBorderRadius={country === 'A'} showDinGepruft={isGermany} />
             </div>
           )}
           
