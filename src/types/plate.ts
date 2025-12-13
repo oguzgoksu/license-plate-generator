@@ -2,6 +2,12 @@ export type PlateWidth = 'compact' | 'standard';
 export type PlateSuffix = '' | 'E' | 'H';  // E = Elektro, H = Historisch (Oldtimer)
 export type PlateStyle = 'normal' | '3d-black-matte' | '3d-black-glossy' | '3d-carbon-matte' | '3d-carbon-glossy';
 
+// Seasonal plate months (1-12)
+export interface SeasonalPlate {
+  startMonth: number;  // 1-12
+  endMonth: number;    // 1-12
+}
+
 export const PLATE_STYLE_NAMES: Record<PlateStyle, string> = {
   'normal': 'Normal (Standard)',
   '3d-black-matte': '3D Schwarz Matt',
@@ -91,6 +97,7 @@ export interface PlateConfig {
   city: string;            // City name shown on state plakette
   huYear: number;          // Year for HU sticker
   huMonth: number;         // Month for HU sticker (1-12)
+  seasonalPlate: SeasonalPlate | null;  // Seasonal plate months (null = not seasonal)
 }
 
 // Keep GermanPlateConfig for backward compatibility

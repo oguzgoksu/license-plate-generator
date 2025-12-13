@@ -95,7 +95,7 @@ const DEFAULT_CONFIG: GermanPlateConfig = {
   cityCode: 'N',
   letters: 'IK',
   numbers: '745',
-  suffix: '',
+  suffix: 'E',
   showStatePlakette: true,
   showHUPlakette: true,
   state: 'NW',
@@ -109,6 +109,7 @@ const DEFAULT_CONFIG: GermanPlateConfig = {
   backgroundColor: '#FFFFFF',
   plateText: 'NIKLAS',
   rightBandText: '',
+  seasonalPlate: null,
 };
 
 // Parse config from URL hash
@@ -118,6 +119,12 @@ function parseConfigFromHash(): GermanPlateConfig {
   const hash = window.location.hash.slice(1); // Remove leading #
   const params = new URLSearchParams(hash);
   
+  const seasonalStart = params.get('seasonStart');
+  const seasonalEnd = params.get('seasonEnd');
+  const seasonalPlate = seasonalStart && seasonalEnd 
+    ? { startMonth: parseInt(seasonalStart), endMonth: parseInt(seasonalEnd) }
+    : null;
+
   return {
     cityCode: params.get('code') || DEFAULT_CONFIG.cityCode,
     letters: params.get('letters') || DEFAULT_CONFIG.letters,
@@ -136,6 +143,7 @@ function parseConfigFromHash(): GermanPlateConfig {
     backgroundColor: params.get('bgColor') || DEFAULT_CONFIG.backgroundColor,
     plateText: params.get('text') || DEFAULT_CONFIG.plateText,
     rightBandText: params.get('rightBand') || DEFAULT_CONFIG.rightBandText,
+    seasonalPlate,
   };
 }
 
@@ -159,6 +167,10 @@ function configToHash(config: GermanPlateConfig): string {
   if (config.backgroundColor !== '#FFFFFF') params.set('bgColor', config.backgroundColor);
   if (config.plateText) params.set('text', config.plateText);
   if (config.rightBandText) params.set('rightBand', config.rightBandText);
+  if (config.seasonalPlate) {
+    params.set('seasonStart', String(config.seasonalPlate.startMonth));
+    params.set('seasonEnd', String(config.seasonalPlate.endMonth));
+  }
   return params.toString();
 }
 
@@ -471,10 +483,13 @@ export default function PlateGenerator() {
                 <input
                   type="text"
                   value={config.numbers}
-                  onChange={(e) => handleChange('numbers', e.target.value.replace(/\D/g, '').slice(0, config.cityCode === 'Y' ? 6 : 4))}
+                  onChange={(e) => handleChange('numbers', config.cityCode === 'Y' 
+                    ? e.target.value.toUpperCase().slice(0, 6)
+                    : e.target.value.replace(/\D/g, '').slice(0, 4)
+                  )}
                   className="modern-input"
                   maxLength={config.cityCode === 'Y' ? 6 : 4}
-                  placeholder={config.cityCode === 'Y' ? "123456" : "1234"}
+                  placeholder={config.cityCode === 'Y' ? "12-AB4" : "1234"}
                 />
               </div>
             )}
@@ -556,8 +571,8 @@ export default function PlateGenerator() {
               </div>
             </div>
 
-            {/* Suffix Selection (E/H) - only for Germany */}
-            {config.country === 'D' && config.cityCode !== 'Y' && (
+            {/* Suffix Selection (E/H) - for Germany (including military) */}
+            {config.country === 'D' && (
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
                   {t.suffix}
@@ -585,7 +600,7 @@ export default function PlateGenerator() {
                 <span className={`transform transition-transform duration-300 ${showGermanOptions ? 'rotate-90' : ''} group-hover:text-purple-500`}>▶</span>
                 <span className="flex items-center gap-2">
                   <span className="text-2xl">🇩🇪</span>
-                  {t.state} / {t.city}
+                  {t.state} / {t.city} / Saisonkennzeichen
                 </span>
               </button>
               
@@ -680,7 +695,66 @@ export default function PlateGenerator() {
                       />
                       <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">{t.showHUPlakette}</span>
                     </label>
+                    <label className="flex items-center gap-3 text-gray-700 dark:text-gray-300 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={config.seasonalPlate !== null}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setConfig(prev => ({ ...prev, seasonalPlate: { startMonth: 3, endMonth: 10 } }));
+                          } else {
+                            setConfig(prev => ({ ...prev, seasonalPlate: null }));
+                          }
+                        }}
+                        className="w-5 h-5 rounded-lg text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 transition-all"
+                      />
+                      <span className="group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Saisonkennzeichen</span>
+                    </label>
                   </div>
+
+                  {/* Seasonal Plate Month Selection */}
+                  {config.seasonalPlate && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                          Saison Start
+                        </label>
+                        <select
+                          value={config.seasonalPlate.startMonth}
+                          onChange={(e) => setConfig(prev => ({
+                            ...prev,
+                            seasonalPlate: prev.seasonalPlate ? { ...prev.seasonalPlate, startMonth: parseInt(e.target.value) } : null
+                          }))}
+                          className="modern-select"
+                        >
+                          {t.months.map((monthName, index) => (
+                            <option key={index + 1} value={index + 1}>
+                              {monthName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                          Saison Ende
+                        </label>
+                        <select
+                          value={config.seasonalPlate.endMonth}
+                          onChange={(e) => setConfig(prev => ({
+                            ...prev,
+                            seasonalPlate: prev.seasonalPlate ? { ...prev.seasonalPlate, endMonth: parseInt(e.target.value) } : null
+                          }))}
+                          className="modern-select"
+                        >
+                          {t.months.map((monthName, index) => (
+                            <option key={index + 1} value={index + 1}>
+                              {monthName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

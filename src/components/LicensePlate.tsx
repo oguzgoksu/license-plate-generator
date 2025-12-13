@@ -87,11 +87,12 @@ function getCountryFeatures(country: string): {
 
 const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
   ({ config, scale = 1 }, ref) => {
-    const { cityCode, letters, numbers, suffix, showStatePlakette, showHUPlakette, state, city, huYear, huMonth, width, plateStyle, country, fontColor, backgroundColor, plateText, rightBandText } = config;
+    const { cityCode, letters, numbers, suffix, showStatePlakette, showHUPlakette, state, city, huYear, huMonth, width, plateStyle, country, fontColor, backgroundColor, plateText, rightBandText, seasonalPlate } = config;
     
     const contentRef = useRef<HTMLDivElement>(null);
     const plateRef = useRef<HTMLDivElement>(null);
     const [compressionRatio, setCompressionRatio] = useState(1);
+    const [dynamicPlateWidth, setDynamicPlateWidth] = useState<number | null>(null);
     const [fontLoaded, setFontLoaded] = useState(false);
     const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
     const [isHovering, setIsHovering] = useState(false);
@@ -136,8 +137,9 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     const euBandWidth = 45 * scale;
     const borderWidth = 3 * scale;
     const padding = 12 * scale; // Padding on each side of content
-    const maxPlateWidth = width === 'standard' ? 520 * scale : calculateCompactWidth(config) * scale;
-    const plateWidth = maxPlateWidth;
+  const standardWidth = 520 * scale;
+  const minCompactWidth = calculateCompactWidth(config) * scale;
+  const plateWidth = width === 'standard' ? standardWidth : (dynamicPlateWidth || minCompactWidth);
     
     const isGermany = country === 'D';
     const fontSize = 105 * scale;
@@ -152,37 +154,59 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     
     // Available width for content (after EU band, borders, padding, and right band if present)
     const rightBandWidth = countryFeatures.hasRightBand ? euBandWidth : 0;
-    const availableWidth = plateWidth - euBandWidth - rightBandWidth - (borderWidth * 2) - (padding * 2);
+    const seasonalPlateWidth = (isGermany && seasonalPlate) ? 37 * scale : 0; // Reserve space for seasonal numbers
+    const availableWidth = plateWidth - euBandWidth - rightBandWidth - seasonalPlateWidth - (borderWidth * 2) - (padding * 2);
     
     // Create a content key that changes when content changes - forces remeasurement
-    const contentKey = `${cityCode}-${letters}-${numbers}-${suffix}-${showStatePlakette}-${showHUPlakette}-${plateText}-${country}`;
+    const contentKey = `${cityCode}-${letters}-${numbers}-${suffix}-${showStatePlakette}-${showHUPlakette}-${plateText}-${country}-${seasonalPlate?.startMonth}-${seasonalPlate?.endMonth}`;
     
-    // Measure content and calculate compression after render AND after font loads
-    useLayoutEffect(() => {
-      if (contentRef.current && fontLoaded) {
-        // Directly manipulate transform for measurement to avoid React state timing issues
-        const el = contentRef.current;
-        const originalTransform = el.style.transform;
+  // Measure content and calculate compression/width after render AND after font loads
+  useLayoutEffect(() => {
+    if (contentRef.current && fontLoaded) {
+      const el = contentRef.current;
+      const originalTransform = el.style.transform;
+      
+      // Remove transform to measure natural width
+      el.style.transform = 'none';
+      
+      // Force synchronous reflow
+      void el.offsetWidth;
+      const contentWidth = el.scrollWidth;
+      
+      if (width === 'compact') {
+        // Compact mode: Expand plate to fit content, but max 520mm
+        const rightBandWidth = countryFeatures.hasRightBand ? euBandWidth : 0;
+        const seasonalPlateWidth = (isGermany && seasonalPlate) ? 37 * scale : 0;
+        const requiredWidth = euBandWidth + rightBandWidth + seasonalPlateWidth + (borderWidth * 2) + (padding * 2) + contentWidth;
+        const maxWidth = 520 * scale;
         
-        // Remove transform to measure natural width
-        el.style.transform = 'none';
-        
-        // Force synchronous reflow
-        void el.offsetWidth;
-        const contentWidth = el.scrollWidth;
-        
+        if (requiredWidth <= maxWidth) {
+          // Fits within max width - no compression needed
+          setDynamicPlateWidth(Math.max(requiredWidth, minCompactWidth));
+          setCompressionRatio(1);
+          el.style.transform = 'none';
+        } else {
+          // Exceeds max width - set to max and compress
+          setDynamicPlateWidth(maxWidth);
+          const ratio = availableWidth / contentWidth;
+          const newRatio = Math.max(0.65, ratio);
+          setCompressionRatio(newRatio);
+          el.style.transform = `scaleX(${newRatio})`;
+        }
+      } else {
+        // Standard mode: Fixed width, compress if needed
         if (contentWidth > availableWidth) {
           const ratio = availableWidth / contentWidth;
           const newRatio = Math.max(0.65, ratio);
           setCompressionRatio(newRatio);
-          // Apply immediately to avoid flash
           el.style.transform = `scaleX(${newRatio})`;
         } else {
           setCompressionRatio(1);
           el.style.transform = originalTransform;
         }
       }
-    }, [contentKey, availableWidth, scale, fontLoaded]);
+    }
+  }, [contentKey, availableWidth, scale, fontLoaded, width, euBandWidth, borderWidth, padding, isGermany, seasonalPlate, minCompactWidth, countryFeatures.hasRightBand]);
     
     const baseTextStyle: React.CSSProperties = {
       fontSize: `${fontSize}px`,
@@ -394,6 +418,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               alignItems: 'center',
               justifyContent: 'center',
               padding: `0 ${padding}px`,
+              paddingRight: seasonalPlate && isGermany ? `${seasonalPlateWidth + padding}px` : `${padding}px`,
               transformStyle: 'preserve-3d',
             }}
           >
@@ -418,7 +443,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                       <div style={{ transformStyle: 'preserve-3d' }}>
                         <BundeswehrPlakette scale={scale * 0.95} isHovering={isHovering} tilt={tilt} />
                       </div>
-                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{numbers}</span>
+                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{numbers}{suffix}</span>
                     </>
                   ) : (
                     <>
@@ -429,10 +454,11 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                       {(showStatePlakette || showHUPlakette) && (
                         <div
                           style={{
+                            position: 'relative',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
-                            gap: `${4 * scale}px`,
+                            gap: /^\d+$/.test(cityCode) ? `${14 * scale}px` : `${4 * scale}px`,
                             flexShrink: 0,
                             transform: compressionRatio < 1 ? `scaleX(${1 / compressionRatio})` : undefined,
                             transformStyle: 'preserve-3d',
@@ -442,6 +468,19 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                           <div style={{ visibility: showHUPlakette ? 'visible' : 'hidden', height: showHUPlakette || showStatePlakette ? undefined : 0 }}>
                             <HUPlakette year={huYear} month={huMonth} scale={scale * 0.8} />
                           </div>
+                          {/* Horizontal line for diplomatic plates (when cityCode is a number) - absolutely positioned */}
+                          {/^\d+$/.test(cityCode) && showStatePlakette && (
+                            <span style={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -50%) translateZ(15px)',
+                              ...textStyle,
+                              fontSize: `${fontSize}px`,
+                              lineHeight: 1,
+                              transformStyle: 'preserve-3d',
+                            }}>-</span>
+                          )}
                           {/* State Plakette (bottom) */}
                           {showStatePlakette && (
                             <StatePlakette state={state} city={city} scale={scale * 0.95} isHovering={isHovering} tilt={tilt} />
@@ -459,6 +498,35 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               )}
             </div>
           </div>
+          
+          {/* Seasonal plate indicators - absolute positioned at right edge */}
+          {isGermany && seasonalPlate && (
+            <div style={{
+              position: 'absolute',
+              right: `${padding}px`,
+              top: '50%',
+              transform: 'translateY(-50%) translateZ(15px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              fontSize: `${28 * scale}px`,
+              fontFamily: 'EuroPlate, sans-serif',
+              fontWeight: 'normal',
+              color: textColor,
+              lineHeight: 1,
+              transformStyle: 'preserve-3d',
+              textShadow: styles.textShadow,
+            }}>
+              <span style={{ letterSpacing: `${1 * scale}px` }}>{String(seasonalPlate.startMonth).padStart(2, '0')}</span>
+              <div style={{
+                width: `${20 * scale}px`,
+                height: `${2 * scale}px`,
+                backgroundColor: textColor,
+                margin: `${2 * scale}px 0`,
+              }} />
+              <span style={{ letterSpacing: `${1 * scale}px` }}>{String(seasonalPlate.endMonth).padStart(2, '0')}</span>
+            </div>
+          )}
         </div>
         </div>
       </div>
@@ -476,6 +544,7 @@ function calculateCompactWidth(config: GermanPlateConfig): number {
   const padding = 24; // 12px on each side
   const charWidth = 47;
   const plaketteWidth = 50;
+  const seasonalWidth = 37; // Width for seasonal plate numbers
   const gap = 16;
   
   let width = euBandWidth + padding;
@@ -488,6 +557,11 @@ function calculateCompactWidth(config: GermanPlateConfig): number {
   const suffixLength = config.suffix ? 1 : 0;
   const spaceWidth = 20;
   width += (config.letters.length + config.numbers.length + suffixLength) * charWidth + spaceWidth + gap;
+  
+  // Add space for seasonal plate if present
+  if (config.seasonalPlate) {
+    width += seasonalWidth;
+  }
   
   return Math.max(width, 340);
 }
