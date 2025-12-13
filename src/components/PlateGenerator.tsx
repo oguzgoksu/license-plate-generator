@@ -1,21 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import * as htmlToImage from 'html-to-image';
-import dynamic from 'next/dynamic';
 import { GermanPlateConfig, GermanState, STATE_NAMES, PlateWidth, PlateSuffix, PlateStyle, EUCountry, EU_COUNTRY_NAMES } from '@/types/plate';
 import LicensePlate from './LicensePlate';
 import { useTranslation, Language, LANGUAGE_NAMES, SUPPORTED_LANGUAGES } from '@/i18n';
 
-// Dynamic import for 3D preview (no SSR for Three.js)
-const CarPreview3D = dynamic(() => import('./CarPreview3D'), { 
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[400px] bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg flex items-center justify-center">
-      <div className="text-white">Loading 3D Preview...</div>
-    </div>
-  )
-});
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -658,35 +648,6 @@ export default function PlateGenerator() {
             </div>
           </div>
         </div>
-
-        {/* 3D Car Preview Toggle - Easter Egg */}
-        {is3DEasterEgg && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              🚗 3D Preview
-            </h2>
-            <button
-              onClick={() => setShow3DPreview(!show3DPreview)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                show3DPreview 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
-            >
-              {show3DPreview ? 'Hide 3D' : 'Show 3D'}
-            </button>
-          </div>
-          {show3DPreview && (
-            <div className="relative">
-              <CarPreview3D plateTexture={plateTexture} />
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
-                🖱️ Drag to rotate • Scroll to zoom
-              </p>
-            </div>
-          )}
-          </div>
-        )}
 
         {/* Export Button */}
         <div className="text-center">
