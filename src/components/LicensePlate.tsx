@@ -428,7 +428,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: `${16 * scale}px`,
+                gap: `${6 * scale}px`,
                 transform: compressionRatio < 1 ? `scaleX(${compressionRatio})` : undefined,
                 transformOrigin: 'center',
                 transformStyle: 'preserve-3d',
@@ -448,7 +448,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   ) : (
                     <>
                       {/* City code */}
-                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{cityCode}</span>
+                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{cityCode}{/^\d+$/.test(cityCode) ? '\u200A' : ''}</span>
                       
                       {/* Plaketten - counter-scale to maintain aspect ratio */}
                       {(showStatePlakette || showHUPlakette) && (
@@ -489,7 +489,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                       )}
                       
                       {/* Letters and numbers */}
-                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{letters} {numbers}{suffix}</span>
+                      <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>{letters}{'\u200A'}{numbers}{suffix}</span>
                     </>
                   )}
                 </>
@@ -542,10 +542,10 @@ export default LicensePlate;
 function calculateCompactWidth(config: GermanPlateConfig): number {
   const euBandWidth = 45;
   const padding = 24; // 12px on each side
-  const charWidth = 47;
-  const plaketteWidth = 50;
+  const charWidth = 42;
+  const plaketteWidth = 45;
   const seasonalWidth = 37; // Width for seasonal plate numbers
-  const gap = 16;
+  const gap = 10;
   
   let width = euBandWidth + padding;
   width += config.cityCode.length * charWidth;
@@ -555,7 +555,7 @@ function calculateCompactWidth(config: GermanPlateConfig): number {
   }
   
   const suffixLength = config.suffix ? 1 : 0;
-  const spaceWidth = 20;
+  const spaceWidth = 18;
   width += (config.letters.length + config.numbers.length + suffixLength) * charWidth + spaceWidth + gap;
   
   // Add space for seasonal plate if present
