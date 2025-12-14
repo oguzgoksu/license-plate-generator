@@ -1,6 +1,6 @@
 # EU License Plate Generator
 
-A Next.js application for generating EU license plates as PNG images.
+A Next.js application for generating EU license plates as PNG images – optimized for Tesla's license plate display feature.
 
 **🌐 [Try it live](https://license-plate.niklas.top)**
 
@@ -8,19 +8,42 @@ A Next.js application for generating EU license plates as PNG images.
 
 ## Features
 
-- 🇩🇪 **German License Plates**: Full support for German Kennzeichen
-- 🏛️ **State Plakette**: Option to add the Landeswappen (state coat of arms)
-- 🔄 **HU Plakette**: Option to add the TÜV/HU sticker with configurable year and month
-- 📐 **Selectable Width**: Choose between standard (520mm) and compact width
-- 🎨 **EuroPlate Font**: Authentic appearance with the official EuroPlate typeface
-- 📥 **PNG Export**: Export at 420×100-200px (aspect ratio dependent)
+### 🌍 Multi-Country Support
+- **27 EU Countries**: Generate plates for all EU member states
+- **Country-specific styling**: Automatic colors/formats per country (yellow for NL/LU/CY, red text for Belgium, etc.)
+- **Right-side bands**: Support for French, Italian, and Portuguese regional codes
+
+### 🇩🇪 German Plates (Full Support)
+- **State Plakette (Landeswappen)**: All 16 German states with authentic coat of arms
+- **HU Plakette**: TÜV/HU inspection sticker with configurable year and month
+- **Seasonal Plates (Saisonkennzeichen)**: Configure start/end months
+- **Special Plates**: Electric (E), Historic (H), and Bundeswehr (Y) plates
+- **City names**: Custom city text on the state plakette
+
+### 🇦🇹 Austrian Plates
+- All 9 Bundesländer with coat of arms
+- Authentic red-stripe design
+
+### 🇭🇺🇸🇰 Hungarian & Slovak Plates
+- National coat of arms support
+
+### 🎨 Customization Options
+- **Plate Width**: Standard (520mm) or compact
+- **Plate Styles**: Normal, 3D Black (matte/glossy), 3D Carbon (matte/glossy)
+- **Custom Colors**: Configurable font and background colors
+- **EuroPlate Font**: Authentic appearance with FE-Schrift typeface
+
+### 📥 Export
+- **PNG Export**: Optimized at 420×100-200px for Tesla's license plate display
+- **URL State**: Shareable configuration via URL hash
 
 ## Technology Stack
 
 - **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
-- **UI**: React 18+ with Tailwind CSS
-- **Font**: EuroPlate TTF
+- **UI**: React 19 with Tailwind CSS 4
+- **Screenshot**: modern-screenshot for cross-browser PNG export
+- **Font**: EuroPlate TTF (FE-Schrift)
 
 ## Getting Started
 
@@ -46,39 +69,6 @@ The app will be available at [http://localhost:3000](http://localhost:3000)
 ```bash
 npm run build
 npm start
-```
-
-## Usage
-
-1. **Configure the plate**: Enter city code (e.g., M, B, HH), letters, and numbers
-2. **Select state**: Choose the German Bundesland for the state plakette
-3. **Set HU date**: Configure year and month for the HU (TÜV) plakette
-4. **Choose width**: Standard (520mm) or compact
-5. **Toggle options**: Show/hide state plakette and HU plakette
-6. **Export**: Click "Als PNG exportieren" to download the image
-
-## License Plate Specifications
-
-- **Standard width**: 520mm
-- **Height**: 110mm
-- **Export dimensions**: 420 × 100-200 pixels (depending on aspect ratio)
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── globals.css      # Global styles + EuroPlate font
-│   ├── layout.tsx       # Root layout
-│   └── page.tsx         # Main page
-├── components/
-│   ├── EUBand.tsx       # Blue EU band with stars
-│   ├── StatePlakette.tsx # German state coat of arms
-│   ├── HUPlakette.tsx   # TÜV inspection sticker
-│   ├── LicensePlate.tsx # Main plate component
-│   └── PlateGenerator.tsx # Full UI with controls
-└── types/
-    └── plate.ts         # TypeScript types
 ```
 
 ## License
