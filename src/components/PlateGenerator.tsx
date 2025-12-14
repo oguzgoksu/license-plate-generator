@@ -298,13 +298,22 @@ export default function PlateGenerator() {
       const dataUrl = canvas.toDataURL('image/png');
       console.debug('[Export] Resized image ready, length:', dataUrl.length);
 
-      // Generate filename
-      const isGermany = config.country === 'D';
+      // Generate filename based on country
       let baseName: string;
-      if (isGermany) {
-        baseName = `${config.cityCode}${config.letters}${config.numbers}${config.suffix}`;
-      } else {
-        baseName = config.plateText || `${config.cityCode}${config.letters}${config.numbers}`;
+      switch (config.country) {
+        case 'D': // Germany: cityCode + letters + numbers + suffix
+          baseName = `${config.cityCode}${config.letters}${config.numbers}${config.suffix}`;
+          break;
+        case 'A': // Austria: cityCode + plateText
+        case 'H': // Hungary: cityCode + plateText
+        case 'SK': // Slovakia: cityCode + plateText
+          baseName = `${config.cityCode}${config.plateText}`;
+          break;
+        case 'CH': // Switzerland: cityCode (canton) + numbers
+          baseName = `${config.cityCode}${config.numbers}`;
+          break;
+        default: // Other countries: use plateText or fallback
+          baseName = config.plateText || `${config.cityCode}${config.letters}${config.numbers}`;
       }
       const cleanName = baseName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 20);
       const filename = `Plate${cleanName}.png`;
