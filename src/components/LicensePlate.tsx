@@ -4,6 +4,7 @@ import React, { forwardRef, useRef, useState, useLayoutEffect, useEffect } from 
 import { GermanPlateConfig, PlateStyle, GermanState, AustrianState, SwissCanton } from '@/types/plate';
 import EUBand from './bands/EUBand';
 import UKBand from './bands/UKBand';
+import NorwayBand from './bands/NorwayBand';
 import StatePlakette from './plaketten/StatePlakette';
 import AustrianStatePlakette from './plaketten/AustrianStatePlakette';
 import HungarianCoatOfArms from './plaketten/HungarianCoatOfArms';
@@ -129,7 +130,8 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           document.fonts.load('105px EuroPlate'),
           document.fonts.load('105px "Google Sans"'),
           document.fonts.load('105px Tratex'),
-          document.fonts.load('105px UKNumberPlate')
+          document.fonts.load('105px UKNumberPlate'),
+          document.fonts.load('600 105px MyriadPro')
         ];
         
         Promise.all(fontPromises).then(() => {
@@ -168,9 +170,9 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     const ukBandWidth = hasUkBand ? 40 * scale : 0; // UK band width when shown
     
     // Available width for content (after EU band, borders, padding, and right band if present)
-    // Switzerland (CH) has no EU band, UK (GB) has UK band instead
-    const effectiveEuBandWidth = (country === 'CH' || country === 'GB') ? 0 : euBandWidth;
-    const effectiveLeftOffset = country === 'GB' ? ukBandWidth : effectiveEuBandWidth;
+    // Switzerland (CH) has no EU band, UK (GB) has UK band instead, Norway (N) has Norway band
+    const effectiveEuBandWidth = (country === 'CH' || country === 'GB' || country === 'N') ? 0 : euBandWidth;
+    const effectiveLeftOffset = country === 'GB' ? ukBandWidth : country === 'N' ? euBandWidth : effectiveEuBandWidth;
     const rightBandWidth = countryFeatures.hasRightBand ? euBandWidth : 0;
     const seasonalPlateWidth = (isGermany && seasonalPlate) ? 37 * scale : 0; // Reserve space for seasonal numbers
     const availableWidth = plateWidth - effectiveLeftOffset - rightBandWidth - seasonalPlateWidth - (borderWidth * 2) - (padding * 2);
@@ -229,6 +231,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     // Select font based on country
     const getFontFamily = () => {
       if (country === 'S') return 'Tratex, Normal';
+      if (country === 'N') return 'MyriadPro, sans-serif';
       if (country === 'GB') return 'UKNumberPlate, sans-serif';
       return 'EuroPlate, sans-serif';
     };
@@ -394,8 +397,8 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
             </>
           )}
           
-          {/* EU Band or German Flag for military - not shown for Switzerland or UK */}
-          {country === 'CH' || country === 'GB' ? null : country === 'D' && cityCode === 'Y' ? (
+          {/* EU Band or German Flag for military - not shown for Switzerland, UK, or Norway */}
+          {country === 'CH' || country === 'GB' || country === 'N' ? null : country === 'D' && cityCode === 'Y' ? (
             /* German Flag for military plates */
             <div style={{
               position: 'absolute',
@@ -453,6 +456,19 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
             </div>
           )}
           
+          {/* Norway Band - with flag and N country code */}
+          {country === 'N' && (
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              zIndex: 2,
+            }}>
+              <NorwayBand scale={scale} height="100%" borderRadius={5} />
+            </div>
+          )}
+          
           {/* Right band for France, Italy, Portugal */}
           {countryFeatures.hasRightBand && (
             <div style={{
@@ -482,7 +498,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           <div 
             style={{ 
               position: 'absolute',
-              left: country === 'CH' ? 0 : (country === 'GB' && hasUkBand) ? `${ukBandWidth}px` : country === 'GB' ? 0 : `${euBandWidth}px`,
+              left: country === 'CH' ? 0 : (country === 'GB' && hasUkBand) ? `${ukBandWidth}px` : country === 'GB' ? 0 : country === 'N' ? `${euBandWidth}px` : `${euBandWidth}px`,
               right: countryFeatures.hasRightBand ? `${euBandWidth}px` : 0,
               top: 0,
               bottom: 0,

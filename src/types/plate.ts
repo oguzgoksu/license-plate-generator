@@ -47,6 +47,7 @@ export type Country =
   | 'SK'  // Slovakia
   | 'SLO' // Slovenia
   | 'E'   // Spain
+  | 'N'   // Norway
   | 'S';  // Sweden
 
 export const EU_COUNTRY_NAMES: Record<Country, string> = {
@@ -78,6 +79,7 @@ export const EU_COUNTRY_NAMES: Record<Country, string> = {
   'SK': 'Slowakei',
   'SLO': 'Slowenien',
   'E': 'Spanien',
+  'N': 'Norwegen',
   'S': 'Schweden',
 };
 

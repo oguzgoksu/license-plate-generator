@@ -32,6 +32,7 @@ const COUNTRY_FLAGS: Record<Country, string> = {
   'LT': '🇱🇹',
   'L': '🇱🇺',
   'M': '🇲🇹',
+  'N': '🇳🇴',
   'NL': '🇳🇱',
   'PL': '🇵🇱',
   'P': '🇵🇹',
@@ -73,6 +74,7 @@ function getCountryDefaults(country: Country): { fontColor: string; backgroundCo
     case 'D':   // Germany
     case 'A':   // Austria (+ red stripes handled in LicensePlate)
     case 'E':   // Spain
+    case 'N':   // Norway
     case 'PL':  // Poland
     case 'CZ':  // Czech Republic
     case 'SK':  // Slovakia

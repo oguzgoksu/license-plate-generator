@@ -25,6 +25,14 @@
 }
 
 @font-face {
+  font-family: 'MyriadPro';
+  src: url('/fonts/MyriadProSemiboldCondensed.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Google Sans';
   src: url('/fonts/GoogleSans-Regular.woff2') format('woff2');
   font-weight: 400;
