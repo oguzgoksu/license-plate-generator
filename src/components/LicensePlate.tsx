@@ -141,38 +141,46 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
       }
     }, []);
     
-    // Plate dimensions
-    const plateHeight = 110 * scale;
+    // Plate dimensions (use country-specific sizes for realism)
+    const baseSize = getBasePlateSize(config);
+    const plateHeight = baseSize.height * scale;
     const euBandWidth = 45 * scale;
     const borderWidth = 3 * scale;
-    const padding = 12 * scale; // Padding on each side of content
-  const standardWidth = 520 * scale;
-  const minCompactWidth = calculateCompactWidth(config) * scale;
-  const plateWidth = width === 'standard' ? standardWidth : (dynamicPlateWidth || minCompactWidth);
+    const framePadding = country === 'DK' ? (1.5 * scale) : 0;   // Gap between border and all content
+    const contentPadding = 6 * scale; // Inner spacing for text area
+    const standardWidth = baseSize.width * scale;
     
-    const isGermany = country === 'D';
-    const fontSize = 105 * scale;
+    const isDanishClassic = country === 'DK' && config.danishVariant === 'classic';
+    const fontSize = country === 'DK' && config.danishPlateType === 'type3' ? 90 * scale : 105 * scale;
     const styles = getPlateStyles(plateStyle, scale);
+    const minCompactWidth = (country === 'DK' ? baseSize.width : calculateCompactWidth(config)) * scale;
+    const plateWidth = width === 'standard' ? standardWidth : (dynamicPlateWidth || minCompactWidth);
     
     // Get country-specific features (visual elements, not colors)
     const countryFeatures = getCountryFeatures(country);
     // Colors come directly from config (set by PlateGenerator on country change)
     const textColor = fontColor;
     const plateBgColor = backgroundColor;
+    const danishBorderColor = '#C8102E';
+    const plateBorderColor = (country === 'DK' || country === 'B') ? danishBorderColor : country === 'A' ? 'transparent' : styles.borderColor;
     const redStripeHeight = 2 * scale;
     const hasUkBand = country === 'GB' && (showUKFlag || isEV);
     const ukBandWidth = hasUkBand ? 40 * scale : 0; // UK band width when shown
+    const hasNorwayBand = country === 'N';
+    const hasStandardEUBand = !(country === 'CH' || country === 'FL' || country === 'GB' || hasNorwayBand || isDanishClassic);
     
     // Available width for content (after EU band, borders, padding, and right band if present)
-    // Switzerland (CH) has no EU band, UK (GB) has UK band instead, Norway (N) has Norway band
-    const effectiveEuBandWidth = (country === 'CH' || country === 'FL' || country === 'GB' || country === 'N') ? 0 : euBandWidth;
-    const effectiveLeftOffset = country === 'GB' ? ukBandWidth : country === 'N' ? euBandWidth : effectiveEuBandWidth;
+    const baseInset = framePadding;
+    const effectiveEuBandWidth = (hasStandardEUBand || hasNorwayBand) ? euBandWidth : 0;
+    const effectiveLeftOffset = country === 'GB' ? (baseInset + (hasUkBand ? ukBandWidth : 0)) : hasNorwayBand ? (baseInset + euBandWidth) : hasStandardEUBand ? (baseInset + euBandWidth) : baseInset;
     const rightBandWidth = countryFeatures.hasRightBand ? euBandWidth : 0;
-    const seasonalPlateWidth = (isGermany && seasonalPlate) ? 37 * scale : 0; // Reserve space for seasonal numbers
-    const availableWidth = plateWidth - effectiveLeftOffset - rightBandWidth - seasonalPlateWidth - (borderWidth * 2) - (padding * 2);
+    const seasonalPlateWidth = (country === 'D' && seasonalPlate) ? 37 * scale : 0; // Reserve space for seasonal numbers
+    const rightInset = countryFeatures.hasRightBand ? (rightBandWidth + baseInset) : baseInset;
+    const availableWidth = plateWidth - effectiveLeftOffset - rightInset - seasonalPlateWidth - (borderWidth * 2) - (framePadding * 2) - (contentPadding * 2);
+    const minCompressionRatio = country === 'DK' && config.danishPlateType === 'type3' ? 0.5 : 0.65;
     
     // Create a content key that changes when content changes - forces remeasurement
-    const contentKey = `${cityCode}-${letters}-${numbers}-${suffix}-${showStatePlakette}-${showHUPlakette}-${plateText}-${plateType}-${country}-${seasonalPlate?.startMonth}-${seasonalPlate?.endMonth}`;
+    const contentKey = `${cityCode}-${letters}-${numbers}-${suffix}-${showStatePlakette}-${showHUPlakette}-${plateText}-${plateType}-${country}-${seasonalPlate?.startMonth}-${seasonalPlate?.endMonth}-${config.danishVariant}-${config.danishPlateType}`;
     
   // Measure content and calculate compression/width after render AND after font loads
   useLayoutEffect(() => {
@@ -188,11 +196,11 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
       const contentWidth = el.scrollWidth;
       
       if (width === 'compact') {
-        // Compact mode: Expand plate to fit content, but max 520mm
+        // Compact mode: Expand plate to fit content, but respect real plate width
         const rightBandWidth = countryFeatures.hasRightBand ? euBandWidth : 0;
-        const seasonalPlateWidth = (isGermany && seasonalPlate) ? 37 * scale : 0;
-        const requiredWidth = effectiveEuBandWidth + rightBandWidth + seasonalPlateWidth + (borderWidth * 2) + (padding * 2) + contentWidth;
-        const maxWidth = 520 * scale;
+        const seasonalPlateWidth = (country === 'D' && seasonalPlate) ? 37 * scale : 0;
+        const requiredWidth = effectiveEuBandWidth + rightBandWidth + seasonalPlateWidth + (borderWidth * 2) + (framePadding * 2) + (contentPadding * 2) + contentWidth;
+        const maxWidth = standardWidth;
         
         if (requiredWidth <= maxWidth) {
           // Fits within max width - no compression needed
@@ -203,7 +211,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           // Exceeds max width - set to max and compress
           setDynamicPlateWidth(maxWidth);
           const ratio = availableWidth / contentWidth;
-          const newRatio = Math.max(0.65, ratio);
+          const newRatio = Math.max(minCompressionRatio, ratio);
           setCompressionRatio(newRatio);
           el.style.transform = `scaleX(${newRatio})`;
         }
@@ -211,7 +219,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
         // Standard mode: Fixed width, compress if needed
         if (contentWidth > availableWidth) {
           const ratio = availableWidth / contentWidth;
-          const newRatio = Math.max(0.65, ratio);
+          const newRatio = Math.max(minCompressionRatio, ratio);
           setCompressionRatio(newRatio);
           el.style.transform = `scaleX(${newRatio})`;
         } else {
@@ -220,7 +228,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
         }
       }
     }
-  }, [contentKey, availableWidth, scale, fontLoaded, width, euBandWidth, effectiveEuBandWidth, borderWidth, padding, isGermany, seasonalPlate, minCompactWidth, countryFeatures.hasRightBand]);
+  }, [contentKey, availableWidth, scale, fontLoaded, width, euBandWidth, effectiveEuBandWidth, borderWidth, framePadding, contentPadding, country === 'D', seasonalPlate, minCompactWidth, countryFeatures.hasRightBand, standardWidth, minCompressionRatio]);
     
     // Select font based on country
     const getFontFamily = () => {
@@ -230,10 +238,11 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
       return 'EuroPlate, sans-serif';
     };
     
+    const baseLetterSpacing = country === 'DK' ? 1.2 * scale : 2 * scale;
     const baseTextStyle: React.CSSProperties = {
       fontSize: `${fontSize}px`,
       fontWeight: 'normal',
-      letterSpacing: `${2 * scale}px`,
+      letterSpacing: `${baseLetterSpacing}px`,
       whiteSpace: 'nowrap',
       fontFamily: getFontFamily(),
     };
@@ -293,6 +302,18 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     
     const whiteBorderWidth = (styles.is3D || country === 'FL') ? 0 : 1.5 * scale;
     
+    const formatDanishPlateText = (text: string) => {
+      const clean = (text || '').toUpperCase().replace(/Q/g, '').replace(/[^A-Z0-9]/g, '').slice(0, 7);
+      const letters = clean.slice(0, 2);
+      const numbers = clean.slice(2);
+      if (!clean) return '';
+      if (!numbers) return letters;
+      if (numbers.length <= 2) return `${letters}\u2009${numbers}`;
+      const firstPair = numbers.slice(0, 2);
+      const rest = numbers.slice(2);
+      return `${letters}\u2009${firstPair}${rest ? `\u2009${rest}` : ''}`;
+    };
+    
     return (
       <div
         ref={ref}
@@ -330,21 +351,19 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           }}
         >
           <div
-            style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              width: `${plateWidth}px`,
-              height: `${plateHeight}px`,
-              backgroundColor: plateBgColor,
-              border: `${borderWidth}px solid ${country === 'A' ? 'transparent' : styles.borderColor}`,
-              borderRadius: `${8 * scale}px`,
-              fontFamily: getFontFamily(),
-              transformStyle: 'preserve-3d',
-              overflow: 'hidden',
-              boxShadow: styles.is3D 
-                ? `inset ${2 * scale}px ${2 * scale}px ${4 * scale}px rgba(255,255,255,0.5), inset ${-1 * scale}px ${-1 * scale}px ${3 * scale}px rgba(0,0,0,0.15)` 
-                : 'none',
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            width: `${plateWidth}px`,
+            height: `${plateHeight}px`,
+            backgroundColor: plateBgColor,
+            border: `${borderWidth}px solid ${plateBorderColor}`,
+            borderRadius: `${8 * scale}px`,
+            padding: `${framePadding}px`,
+            fontFamily: getFontFamily(),
+            transformStyle: 'preserve-3d',
+            overflow: 'hidden',
             }}
           >
           {/* Austrian red stripes - double stripes top and bottom, full width */}
@@ -390,75 +409,86 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               }} />
             </>
           )}
+
+          {(country === 'DK') && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(120deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 38%, rgba(255,255,255,0.14) 60%, rgba(255,255,255,0.05) 100%)',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
           
-          {/* EU Band or German Flag for military - not shown for Switzerland, UK, or Norway */}
-          {country === 'CH' || country === 'FL' || country === 'GB' || country === 'N' ? null : country === 'D' && cityCode === 'Y' ? (
-            /* German Flag for military plates */
-            <div style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: `${euBandWidth}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: `${15 * scale}px ${4 * scale}px`,
-              zIndex: 2,
-            }}>
+          {/* EU Band or German Flag for military */}
+          {hasStandardEUBand && (
+            country === 'D' && cityCode === 'Y' ? (
+              /* German Flag for military plates */
               <div style={{
-                width: '100%',
-                height: '100%',
+                position: 'absolute',
+                left: `${framePadding}px`,
+                top: `${framePadding}px`,
+                bottom: `${framePadding}px`,
+                width: `${euBandWidth}px`,
                 display: 'flex',
-                flexDirection: 'column',
-                borderRadius: `${2 * scale}px`,
-                overflow: 'hidden',
-                position: 'relative',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
               }}>
-                <div style={{ flex: 1, backgroundColor: '#000000' }} />
-                <div style={{ flex: 1, backgroundColor: '#DD0000' }} />
-                <div style={{ flex: 1, backgroundColor: '#FFCE00' }} />
-                {/* Dynamic shimmer overlay */}
-                {isHovering && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: `radial-gradient(ellipse at ${50 + (tilt.rotateY * 3)}% ${50 + (tilt.rotateX * 3)}%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`,
-                      pointerEvents: 'none',
-                    }}
-                  />
-                )}
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: `${2 * scale}px`,
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}>
+                  <div style={{ flex: 1, backgroundColor: '#000000' }} />
+                  <div style={{ flex: 1, backgroundColor: '#DD0000' }} />
+                  <div style={{ flex: 1, backgroundColor: '#FFCE00' }} />
+                  {/* Dynamic shimmer overlay */}
+                  {isHovering && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: `radial-gradient(ellipse at ${50 + (tilt.rotateY * 3)}% ${50 + (tilt.rotateX * 3)}%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            /* Standard EU Band */
-            <div style={{
-              position: 'absolute',
-              left: 0,
-              top: country === 'A' ? `${redStripeHeight * 3}px` : 0,
-              bottom: country === 'A' ? `${redStripeHeight * 3}px` : 0,
-              width: `${euBandWidth}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: country === 'A' ? `0 ${3 * scale}px` : '0',
-              zIndex: 2,
-            }}>
-              <EUBand scale={scale} countryCode={country} height={country === 'A' ? '100%' : undefined} noBorderRadius={country === 'A'} showDinGepruft={isGermany} borderRadius={5} />
-            </div>
+            ) : (
+              /* Standard EU Band */
+              <div style={{
+                position: 'absolute',
+                left: `${framePadding}px`,
+                top: country === 'A' ? `${redStripeHeight * 3 + framePadding}px` : `${framePadding}px`,
+                bottom: country === 'A' ? `${redStripeHeight * 3 + framePadding}px` : `${framePadding}px`,
+                width: `${euBandWidth}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
+              }}>
+                <EUBand scale={scale} countryCode={country} height="100%" noBorderRadius={country === 'A'} showDinGepruft={country === 'D'} borderRadius={5} />
+              </div>
+            )
           )}
           
           {/* UK Band - with flag and UK text, green for EV */}
           {country === 'GB' && (showUKFlag || isEV) && (
             <div style={{
               position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
+              left: `${framePadding}px`,
+              top: `${framePadding}px`,
+              bottom: `${framePadding}px`,
               zIndex: 2,
             }}>
               <UKBand scale={scale} height="100%" showFlag={showUKFlag} isEV={isEV} borderRadius={5} isHovering={isHovering} tilt={tilt} />
@@ -466,12 +496,12 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           )}
           
           {/* Norway Band - with flag and N country code */}
-          {country === 'N' && (
+          {hasNorwayBand && (
             <div style={{
               position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
+              left: `${framePadding}px`,
+              top: `${framePadding}px`,
+              bottom: `${framePadding}px`,
               zIndex: 2,
             }}>
               <NorwayBand scale={scale} height="100%" borderRadius={5} isHovering={isHovering} tilt={tilt} />
@@ -482,9 +512,9 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           {countryFeatures.hasRightBand && (
             <div style={{
               position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
+              right: `${framePadding}px`,
+              top: `${framePadding}px`,
+              bottom: `${framePadding}px`,
               width: `${euBandWidth}px`,
               backgroundColor: countryFeatures.rightBandColor,
               display: 'flex',
@@ -507,15 +537,15 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           <div 
             style={{ 
               position: 'absolute',
-              left: (country === 'CH' || country === 'FL') ? 0 : (country === 'GB' && hasUkBand) ? `${ukBandWidth}px` : country === 'GB' ? 0 : country === 'N' ? `${euBandWidth}px` : `${euBandWidth}px`,
+              left: `${effectiveLeftOffset}px`,
               right: countryFeatures.hasRightBand ? `${euBandWidth}px` : 0,
               top: 0,
               bottom: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: `0 ${padding}px`,
-              paddingRight: seasonalPlate && isGermany ? `${seasonalPlateWidth + padding}px` : `${padding}px`,
+              padding: `0 ${contentPadding}px`,
+              paddingRight: seasonalPlate && country === 'D' ? `${seasonalPlateWidth + contentPadding}px` : `${contentPadding}px`,
               transformStyle: 'preserve-3d',
             }}
           >
@@ -531,7 +561,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                 transformStyle: 'preserve-3d',
               }}
             >
-              {isGermany ? (
+              {country === 'D' ? (
                 <>
                   {cityCode === 'Y' ? (
                     /* Military format: Y-123456 with Bundeswehr plakette */
@@ -684,6 +714,8 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                 }}>
                   {country === 'S' ? (
                     plateType === 'normal' ? `${plateText.slice(0, 3)}\u2009${plateText.slice(3, 6)}` : plateText
+                  ) : country === 'DK' ? (
+                    formatDanishPlateText(plateText)
                   ) : (plateText || '')}
                 </span>
               )}
@@ -691,10 +723,10 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
           </div>
           
           {/* Seasonal plate indicators - absolute positioned at right edge */}
-          {isGermany && seasonalPlate && (
+          {country === 'D' && seasonalPlate && (
             <div style={{
               position: 'absolute',
-              right: `${padding}px`,
+              right: `${contentPadding}px`,
               top: '50%',
               transform: 'translateY(-50%) translateZ(15px)',
               display: 'flex',
@@ -729,8 +761,22 @@ LicensePlate.displayName = 'LicensePlate';
 
 export default LicensePlate;
 
+// Base plate size in millimeters (approximate pixels at scale 1)
+function getBasePlateSize(config: GermanPlateConfig): { width: number; height: number } {
+  if (config.country === 'DK') {
+    return config.danishPlateType === 'type3'
+      ? { width: 240, height: 165 }  // Type 3/5 square/tall
+      : { width: 504, height: 120 }; // Type 1 standard Danish size
+  }
+  return { width: 520, height: 110 };
+}
+
 // Calculate minimum width for compact mode
 function calculateCompactWidth(config: GermanPlateConfig): number {
+  if (config.country === 'DK') {
+    // Danish plates have fixed physical dimensions - respect the selected type width
+    return getBasePlateSize(config).width;
+  }
   const euBandWidth = 45;
   const padding = 24; // 12px on each side
   const charWidth = 42;
