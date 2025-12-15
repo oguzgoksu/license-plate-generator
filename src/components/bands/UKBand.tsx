@@ -9,13 +9,19 @@ interface UKBandProps {
   showFlag: boolean;  // Show UK flag + text
   isEV: boolean;      // Green background for EV
   borderRadius?: number;
+  isHovering?: boolean;
+  tilt?: { rotateX: number; rotateY: number };
 }
 
-export default function UKBand({ scale = 1, height, showFlag, isEV, borderRadius = 5 }: UKBandProps) {
+export default function UKBand({ scale = 1, height, showFlag, isEV, borderRadius = 5, isHovering = false, tilt = { rotateX: 0, rotateY: 0 } }: UKBandProps) {
   const width = 40 * scale;
   const defaultHeight = 110 * scale;
   const actualHeight = height || defaultHeight;
   const radius = borderRadius * scale;
+  
+  // Calculate shimmer position based on tilt
+  const shimmerX = 50 + (tilt.rotateY * 3);
+  const shimmerY = 50 + (tilt.rotateX * 3);
   
   // Green only strip (EV without flag)
   if (!showFlag && isEV) {
@@ -48,20 +54,36 @@ export default function UKBand({ scale = 1, height, showFlag, isEV, borderRadius
       }}
     >
       {/* UK Flag */}
-      <div style={{ 
-        width: `${28 * scale}px`, 
-        height: `${18 * scale}px`,
-        position: 'relative',
-        borderRadius: `${2 * scale}px`,
-        overflow: 'hidden',
-        boxShadow: `0 ${1 * scale}px ${2 * scale}px rgba(0,0,0,0.3)`,
-      }}>
+      <div 
+        style={{ 
+          width: `${28 * scale}px`, 
+          height: `${18 * scale}px`,
+          position: 'relative',
+          borderRadius: `${2 * scale}px`,
+          overflow: 'hidden',
+          boxShadow: `0 ${1 * scale}px ${2 * scale}px rgba(0,0,0,0.3)`,
+        }}
+      >
         <Image
           src="/flags/uk.svg"
           alt="UK Flag"
           fill
           style={{ objectFit: 'cover' }}
         />
+        {/* Dynamic shimmer overlay */}
+        {isHovering && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `radial-gradient(ellipse at ${shimmerX}% ${shimmerY}%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
       </div>
       
       {/* UK text */}

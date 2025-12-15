@@ -1,34 +1,24 @@
 'use client';
 
 import React from 'react';
+import CoatOfArms from './CoatOfArms';
 
 interface SlovakCoatOfArmsProps {
   scale?: number;
+  isHovering?: boolean;
+  tilt?: { rotateX: number; rotateY: number };
 }
 
-export default function SlovakCoatOfArms({ scale = 1 }: SlovakCoatOfArmsProps) {
-  const size = 50 * scale;
-  
+export default function SlovakCoatOfArms({ scale = 1, isHovering = false, tilt }: SlovakCoatOfArmsProps) {
   return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <img
-        src="/coa/sk.svg"
-        alt="Slovak coat of arms"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-        }}
-      />
-    </div>
+    <CoatOfArms
+      src="/coa/sk.svg"
+      alt="Slovak coat of arms"
+      scale={scale}
+      size={50}
+      isHovering={isHovering}
+      tilt={tilt}
+      useNextImage={false}
+    />
   );
 }

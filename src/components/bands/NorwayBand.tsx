@@ -7,13 +7,19 @@ interface NorwayBandProps {
   scale?: number;
   height?: number | string;
   borderRadius?: number;
+  isHovering?: boolean;
+  tilt?: { rotateX: number; rotateY: number };
 }
 
-export default function NorwayBand({ scale = 1, height, borderRadius = 5 }: NorwayBandProps) {
+export default function NorwayBand({ scale = 1, height, borderRadius = 5, isHovering = false, tilt = { rotateX: 0, rotateY: 0 } }: NorwayBandProps) {
   const width = 45 * scale;
   const defaultHeight = 110 * scale;
   const actualHeight = height || defaultHeight;
   const radius = borderRadius * scale;
+  
+  // Calculate shimmer position based on tilt
+  const shimmerX = 50 + (tilt.rotateY * 3);
+  const shimmerY = 50 + (tilt.rotateX * 3);
   
   return (
     <div 
@@ -31,20 +37,36 @@ export default function NorwayBand({ scale = 1, height, borderRadius = 5 }: Norw
       }}
     >
       {/* Norwegian Flag */}
-      <div style={{ 
-        width: `${32 * scale}px`, 
-        height: `${24 * scale}px`,
-        position: 'relative',
-        borderRadius: `${2 * scale}px`,
-        overflow: 'hidden',
-        boxShadow: `0 ${1 * scale}px ${3 * scale}px rgba(0,0,0,0.4)`,
-      }}>
+      <div 
+        style={{ 
+          width: `${32 * scale}px`, 
+          height: `${24 * scale}px`,
+          position: 'relative',
+          borderRadius: `${2 * scale}px`,
+          overflow: 'hidden',
+          boxShadow: `0 ${1 * scale}px ${3 * scale}px rgba(0,0,0,0.4)`,
+        }}
+      >
         <Image
           src="/flags/no.svg"
           alt="Norwegian Flag"
           fill
           style={{ objectFit: 'cover' }}
         />
+        {/* Dynamic shimmer overlay */}
+        {isHovering && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `radial-gradient(ellipse at ${shimmerX}% ${shimmerY}%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%)`,
+              pointerEvents: 'none',
+            }}
+          />
+        )}
       </div>
       
       {/* Country code N */}

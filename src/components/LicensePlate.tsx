@@ -452,7 +452,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               bottom: 0,
               zIndex: 2,
             }}>
-              <UKBand scale={scale} height="100%" showFlag={showUKFlag} isEV={isEV} borderRadius={5} />
+              <UKBand scale={scale} height="100%" showFlag={showUKFlag} isEV={isEV} borderRadius={5} isHovering={isHovering} tilt={tilt} />
             </div>
           )}
           
@@ -465,7 +465,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               bottom: 0,
               zIndex: 2,
             }}>
-              <NorwayBand scale={scale} height="100%" borderRadius={5} />
+              <NorwayBand scale={scale} height="100%" borderRadius={5} isHovering={isHovering} tilt={tilt} />
             </div>
           )}
           
@@ -590,7 +590,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   {/* Austrian Bundesland Plakette - plain emblem */}
                   {showStatePlakette && country === 'A' && (
                     <div style={{ transformStyle: 'preserve-3d' }}>
-                      <AustrianStatePlakette state={state as AustrianState} scale={scale * 1.3} />
+                      <AustrianStatePlakette state={state as AustrianState} scale={scale * 1.3} isHovering={isHovering} tilt={tilt} />
                     </div>
                   )}
                   
@@ -606,7 +606,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   {/* Hungarian national coat of arms */}
                   {showStatePlakette && (
                     <div style={{ transformStyle: 'preserve-3d' }}>
-                      <HungarianCoatOfArms scale={scale * 1.3} />
+                      <HungarianCoatOfArms scale={scale * 1.3} isHovering={isHovering} tilt={tilt} />
                     </div>
                   )}
                   
@@ -622,7 +622,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   {/* Slovak national coat of arms */}
                   {showStatePlakette && (
                     <div style={{ transformStyle: 'preserve-3d' }}>
-                      <SlovakCoatOfArms scale={scale * 1.3} />
+                      <SlovakCoatOfArms scale={scale * 1.3} isHovering={isHovering} tilt={tilt} />
                     </div>
                   )}
                   
@@ -635,7 +635,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   {/* Swiss coat of arms (left side) */}
                   {showStatePlakette && (
                     <div style={{ transformStyle: 'preserve-3d' }}>
-                      <SwissCoatOfArms scale={scale * 1.15} />
+                      <SwissCoatOfArms scale={scale * 1.15} isHovering={isHovering} tilt={tilt} />
                     </div>
                   )}
                   
@@ -647,12 +647,16 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   {/* Canton coat of arms (right side) */}
                   {showStatePlakette && state && (
                     <div style={{ transformStyle: 'preserve-3d' }}>
-                      <SwissCantonPlakette canton={state as SwissCanton} scale={scale * 1.15} />
+                      <SwissCantonPlakette canton={state as SwissCanton} scale={scale * 1.15} isHovering={isHovering} tilt={tilt} />
                     </div>
                   )}
                 </>
               ) : (
-                <span style={{ ...textStyle, transform: 'translateZ(15px)', transformStyle: 'preserve-3d' }}>
+                <span style={{ 
+                  ...textStyle, 
+                  transform: `translateZ(15px)${country === 'N' ? ' translateY(12px)' : ''}`, 
+                  transformStyle: 'preserve-3d' 
+                }}>
                   {country === 'S' ? (
                     plateType === 'normal' ? `${plateText.slice(0, 3)}\u2009${plateText.slice(3, 6)}` : plateText
                   ) : (plateText || '')}

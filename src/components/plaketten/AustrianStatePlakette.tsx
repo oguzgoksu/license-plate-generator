@@ -2,22 +2,23 @@
 
 import React from 'react';
 import { AustrianState, AUSTRIAN_STATE_NAMES } from '@/types/plate';
+import CoatOfArms from './CoatOfArms';
 
 interface AustrianStatePlaketteProps {
   state: AustrianState;
   scale?: number;
+  isHovering?: boolean;
+  tilt?: { rotateX: number; rotateY: number };
 }
 
-export default function AustrianStatePlakette({ state, scale = 1 }: AustrianStatePlaketteProps) {
+export default function AustrianStatePlakette({ state, scale = 1, isHovering = false, tilt }: AustrianStatePlaketteProps) {
   const width = 50 * scale;
-  const height = 60 * scale;
   
   // Safety check for undefined state
   if (!state || !(state in AUSTRIAN_STATE_NAMES)) {
     return null;
   }
   
-  const imagePath = `/coa/at/${state}.svg`;
   const stateName = AUSTRIAN_STATE_NAMES[state].toUpperCase();
   
   // Calculate compression based on text length
@@ -37,14 +38,14 @@ export default function AustrianStatePlakette({ state, scale = 1 }: AustrianStat
       }}
     >
       {/* Coat of arms - plain, no circle */}
-      <img
-        src={imagePath}
+      <CoatOfArms
+        src={`/coa/at/${state}.svg`}
         alt={stateName}
-        style={{
-          width: `${width}px`,
-          height: `${width}px`,
-          objectFit: 'contain',
-        }}
+        scale={scale}
+        size={50}
+        isHovering={isHovering}
+        tilt={tilt}
+        useNextImage={false}
       />
       
       {/* State name below - constrained to emblem width */}

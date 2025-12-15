@@ -1,38 +1,24 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import CoatOfArms from './CoatOfArms';
 
 interface SwissCoatOfArmsProps {
   scale?: number;
+  isHovering?: boolean;
+  tilt?: { rotateX: number; rotateY: number };
 }
 
 // Swiss national coat of arms - displayed on the left side of Swiss plates
-export default function SwissCoatOfArms({ scale = 1 }: SwissCoatOfArmsProps) {
-  const size = 50 * scale;
-  
+export default function SwissCoatOfArms({ scale = 1, isHovering = false, tilt }: SwissCoatOfArmsProps) {
   return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <Image
-        src="/coa/ch/CH.svg"
-        alt="Schweizer Wappen"
-        width={size}
-        height={size}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-        }}
-      />
-    </div>
+    <CoatOfArms
+      src="/coa/ch/CH.svg"
+      alt="Schweizer Wappen"
+      scale={scale}
+      size={50}
+      isHovering={isHovering}
+      tilt={tilt}
+    />
   );
 }
