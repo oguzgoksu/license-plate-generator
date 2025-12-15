@@ -2,6 +2,8 @@ export type PlateWidth = 'compact' | 'standard';
 export type PlateSuffix = '' | 'E' | 'H';  // E = Elektro, H = Historisch (Oldtimer)
 export type PlateStyle = 'normal' | '3d-black-matte' | '3d-black-glossy' | '3d-carbon-matte' | '3d-carbon-glossy';
 export type PlateType = 'normal' | 'personalized';
+export type DanishVariant = 'classic' | 'eu'; // Classic white edge vs. Euroband
+export type DanishPlateType = 'type1' | 'type3'; // Type 1 (504x120) vs. Type 3/5 (240x165)
 
 // Seasonal plate months (1-12)
 export interface SeasonalPlate {
@@ -97,6 +99,8 @@ export interface PlateConfig {
   rightBandText: string;   // Text for right band (France, Italy, Portugal)
   showUKFlag: boolean;     // Show UK flag + text on left band (UK only)
   isEV: boolean;           // Electric vehicle - green band for UK
+  danishVariant: DanishVariant; // Classic (no EU strip) or Euroband
+  danishPlateType: DanishPlateType; // Plate shape for Denmark (Type 1 vs. Type 3/5)
   
   // German-specific settings
   cityCode: string;        // e.g., "M", "B", "HH" or "Y" for military (auto-detected)
