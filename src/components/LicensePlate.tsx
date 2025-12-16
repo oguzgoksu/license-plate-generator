@@ -302,12 +302,17 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     
     const whiteBorderWidth = (styles.is3D || country === 'FL') ? 0 : 1.5 * scale;
     
-    const formatDanishPlateText = (text: string) => {
+    const formatDanishPlateText = (text: string, applySpacing: boolean = true) => {
       const clean = (text || '').toUpperCase().replace(/Q/g, '').replace(/[^A-Z0-9]/g, '').slice(0, 7);
       const letters = clean.slice(0, 2);
       const numbers = clean.slice(2);
       if (!clean) return '';
       if (!numbers) return letters;
+
+      // If spacing disabled (personalized plate), return as-is
+      if (!applySpacing) return clean;
+
+      // Apply standard spacing for normal plates
       if (numbers.length <= 2) return `${letters}\u2009${numbers}`;
       const firstPair = numbers.slice(0, 2);
       const rest = numbers.slice(2);
@@ -707,15 +712,15 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   )}
                 </>
               ) : (
-                <span style={{ 
-                  ...textStyle, 
-                  transform: `translateZ(15px)${country === 'N' ? ' translateY(12px)' : ''}`, 
-                  transformStyle: 'preserve-3d' 
+                <span style={{
+                  ...textStyle,
+                  transform: `translateZ(15px)${country === 'N' ? ' translateY(12px)' : ''}`,
+                  transformStyle: 'preserve-3d'
                 }}>
                   {country === 'S' ? (
                     plateType === 'normal' ? `${plateText.slice(0, 3)}\u2009${plateText.slice(3, 6)}` : plateText
                   ) : country === 'DK' ? (
-                    formatDanishPlateText(plateText)
+                    formatDanishPlateText(plateText, plateType === 'normal')
                   ) : (plateText || '')}
                 </span>
               )}

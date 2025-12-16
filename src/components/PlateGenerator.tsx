@@ -265,9 +265,14 @@ export default function PlateGenerator() {
           // Set default normal format
           newConfig.plateText = 'ABC123';
         }
+      } else if (prev.country === 'DK') {
+        if (prev.plateType === 'normal') {
+          // Set default normal format for Denmark
+          newConfig.plateText = 'AB12345';
+        }
       } else {
-        // Reset when not Sweden
-        if (prev.plateText === 'ABC123') {
+        // Reset when not Sweden or Denmark
+        if (prev.plateText === 'ABC123' || prev.plateText === 'AB12345') {
           newConfig.plateText = DEFAULT_CONFIG.plateText;
         }
       }
@@ -482,7 +487,9 @@ export default function PlateGenerator() {
             {!['D', 'A', 'H', 'SK', 'CH', 'FL'].includes(config.country) && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
-                  {config.country === 'S' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText) : t.plateText}
+                  {config.country === 'S' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText)
+                    : config.country === 'DK' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText)
+                    : t.plateText}
                 </label>
                 <input
                   type="text"
@@ -498,10 +505,10 @@ export default function PlateGenerator() {
                   }}
                   className="modern-input"
                   placeholder={
-                    config.country === 'S' 
+                    config.country === 'S'
                       ? (config.plateType === 'normal' ? 'ABC123' : 'MYPLATE')
                       : config.country === 'DK'
-                        ? 'AB12345'
+                        ? (config.plateType === 'normal' ? 'AB12345' : 'ELON')
                       : 'AB 123 CD'
                   }
                   maxLength={config.country === 'S' ? (config.plateType === 'normal' ? 6 : 7) : config.country === 'DK' ? 7 : undefined}
@@ -799,6 +806,19 @@ export default function PlateGenerator() {
                   >
                     <option value="type1">{t.danishType1}</option>
                     <option value="type3">{t.danishType3}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {t.plateType}
+                  </label>
+                  <select
+                    value={config.plateType}
+                    onChange={(e) => handleChange('plateType', e.target.value as PlateType)}
+                    className="modern-select"
+                  >
+                    <option value="normal">{t.plateTypeNormal}</option>
+                    <option value="personalized">{t.plateTypePersonalized}</option>
                   </select>
                 </div>
               </>
