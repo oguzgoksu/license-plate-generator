@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { domToPng } from 'modern-screenshot';
-import { GermanPlateConfig, GermanState, STATE_NAMES, AustrianState, AUSTRIAN_STATE_NAMES, HungarianState, SlovakState, SwissCanton, SWISS_CANTON_NAMES, PlateWidth, PlateSuffix, PlateStyle, PlateType, Country } from '@/types/plate';
+import { GermanPlateConfig, GermanState, STATE_NAMES, AustrianState, AUSTRIAN_STATE_NAMES, HungarianState, SlovakState, SwissCanton, SWISS_CANTON_NAMES, PlateWidth, PlateSuffix, PlateStyle, PlateType, Country, DanishVariant, DanishPlateType } from '@/types/plate';
 import LicensePlate from './LicensePlate';
 import { useTranslation, Language, LANGUAGE_NAMES, LANGUAGE_FLAGS, SUPPORTED_LANGUAGES } from '@/i18n';
 
@@ -120,6 +120,8 @@ const DEFAULT_CONFIG: GermanPlateConfig = {
   seasonalPlate: null,
   showUKFlag: false,
   isEV: false,
+  danishVariant: 'eu',
+  danishPlateType: 'type1',
 };
 
 // Parse config from URL hash
@@ -134,6 +136,15 @@ function parseConfigFromHash(): GermanPlateConfig {
   const seasonalPlate = seasonalStart && seasonalEnd 
     ? { startMonth: parseInt(seasonalStart), endMonth: parseInt(seasonalEnd) }
     : null;
+
+  const dkStyleParam = params.get('dkStyle');
+  const dkTypeParam = params.get('dkType');
+  const danishVariant: DanishVariant = dkStyleParam === 'classic' || dkStyleParam === 'eu'
+    ? dkStyleParam
+    : DEFAULT_CONFIG.danishVariant;
+  const danishPlateType: DanishPlateType = dkTypeParam === 'type3' || dkTypeParam === 'type1'
+    ? dkTypeParam
+    : DEFAULT_CONFIG.danishPlateType;
 
   return {
     cityCode: params.get('code') || DEFAULT_CONFIG.cityCode,
@@ -157,6 +168,8 @@ function parseConfigFromHash(): GermanPlateConfig {
     seasonalPlate,
     showUKFlag: params.get('ukFlag') === '1',
     isEV: params.get('ev') === '1',
+    danishVariant,
+    danishPlateType,
   };
 }
 
@@ -187,6 +200,8 @@ function configToHash(config: GermanPlateConfig): string {
   }
   if (config.showUKFlag) params.set('ukFlag', '1');
   if (config.isEV) params.set('ev', '1');
+  if (config.danishVariant !== DEFAULT_CONFIG.danishVariant) params.set('dkStyle', config.danishVariant);
+  if (config.danishPlateType !== DEFAULT_CONFIG.danishPlateType) params.set('dkType', config.danishPlateType);
   return params.toString();
 }
 
@@ -259,10 +274,15 @@ export default function PlateGenerator() {
         if (prev.plateType === 'normal') {
           newConfig.plateText = 'ABC123';
         }
+      } else if (prev.country === 'DK') {
+        if (prev.plateType === 'normal') {
+          // Set default normal format for Denmark
+          newConfig.plateText = 'AB12345';
+        }
       } else {
-        // Reset when not Sweden
-        if (prev.plateText === 'ABC123') {
-           newConfig.plateText = 'MUSTER'; 
+        // Reset when not Sweden or Denmark
+        if (prev.plateText === 'ABC123' || prev.plateText === 'AB12345') {
+          newConfig.plateText = DEFAULT_CONFIG.plateText;
         }
       }
       return newConfig;
@@ -455,6 +475,9 @@ export default function PlateGenerator() {
                     // Reset cityCode for Swiss plates to canton code
                     cityCode: newCountry === 'CH' ? 'ZH' : prev.cityCode,
                     numbers: newCountry === 'CH' ? '123456' : prev.numbers,
+                    danishVariant: newCountry === 'DK' ? DEFAULT_CONFIG.danishVariant : prev.danishVariant,
+                    danishPlateType: newCountry === 'DK' ? DEFAULT_CONFIG.danishPlateType : prev.danishPlateType,
+                    plateText: newCountry === 'DK' ? 'AB12345' : prev.plateText,
                   }));
                   setShowGermanOptions(newCountry === 'D');
                   setShowAustrianOptions(newCountry === 'A');
@@ -473,19 +496,31 @@ export default function PlateGenerator() {
             {!['D', 'A', 'H', 'SK', 'CH', 'FL', 'HR'].includes(config.country) && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
-                  {config.country === 'S' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText) : t.plateText}
+                  {config.country === 'S' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText)
+                    : config.country === 'DK' ? (config.plateType === 'normal' ? t.lettersAndNumbers : t.personalizedText)
+                    : t.plateText}
                 </label>
                 <input
                   type="text"
                   value={config.plateText}
-                  onChange={(e) => handleChange('plateText', e.target.value.toUpperCase().slice(0, config.country === 'S' ? (config.plateType === 'normal' ? 6 : 7) : undefined))}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.toUpperCase();
+                    if (config.country === 'DK') {
+                      const sanitized = rawValue.replace(/Q/g, '').replace(/[^A-Z0-9]/g, '').slice(0, 7);
+                      handleChange('plateText', sanitized);
+                      return;
+                    }
+                    handleChange('plateText', rawValue.slice(0, config.country === 'S' ? (config.plateType === 'normal' ? 6 : 7) : undefined));
+                  }}
                   className="modern-input"
                   placeholder={
-                    config.country === 'S' 
+                    config.country === 'S'
                       ? (config.plateType === 'normal' ? 'ABC123' : 'MYPLATE')
+                      : config.country === 'DK'
+                        ? (config.plateType === 'normal' ? 'AB12345' : 'ELON')
                       : 'AB 123 CD'
                   }
-                  maxLength={config.country === 'S' ? (config.plateType === 'normal' ? 6 : 7) : undefined}
+                  maxLength={config.country === 'S' ? (config.plateType === 'normal' ? 6 : 7) : config.country === 'DK' ? 7 : undefined}
                 />
               </div>
             )}
@@ -784,6 +819,51 @@ export default function PlateGenerator() {
                 <option value="3d-carbon-matte">{t.style3DCarbonMatte}</option>
               </select>
             </div>
+
+            {/* Danish options */}
+            {config.country === 'DK' && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {t.danishStyle}
+                  </label>
+                <select
+                  value={config.danishVariant}
+                  onChange={(e) => handleChange('danishVariant', e.target.value as DanishVariant)}
+                  className="modern-select"
+                >
+                  <option value="classic">{t.danishClassic}</option>
+                  <option value="eu">{t.danishEuro}</option>
+                </select>
+              </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {t.danishPlateType}
+                  </label>
+                  <select
+                    value={config.danishPlateType}
+                    onChange={(e) => handleChange('danishPlateType', e.target.value as DanishPlateType)}
+                    className="modern-select"
+                  >
+                    <option value="type1">{t.danishType1}</option>
+                    <option value="type3">{t.danishType3}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                    {t.plateType}
+                  </label>
+                  <select
+                    value={config.plateType}
+                    onChange={(e) => handleChange('plateType', e.target.value as PlateType)}
+                    className="modern-select"
+                  >
+                    <option value="normal">{t.plateTypeNormal}</option>
+                    <option value="personalized">{t.plateTypePersonalized}</option>
+                  </select>
+                </div>
+              </>
+            )}
 
             {/* Plate Type Selection - only for Sweden */}
             {config.country === 'S' && (
