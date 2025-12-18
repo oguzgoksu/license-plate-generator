@@ -168,7 +168,7 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
     const textColor = fontColor;
     const plateBgColor = backgroundColor;
     const danishBorderColor = '#C8102E';
-    const plateBorderColor = (country === 'DK' || country === 'B') ? danishBorderColor : country === 'A' ? 'transparent' : styles.borderColor;
+    const plateBorderColor = (country === 'DK' || country === 'B') ? danishBorderColor : (country === 'A' || country === 'HR') ? 'transparent' : styles.borderColor;
     const redStripeHeight = 2 * scale;
     const hasUkBand = country === 'GB' && (showUKFlag || isEV);
     const ukBandWidth = hasUkBand ? 40 * scale : 0; // UK band width when shown
@@ -370,8 +370,9 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
               width: `${plateWidth}px`,
               height: `${plateHeight}px`,
               backgroundColor: plateBgColor,
-              border: `${borderWidth}px solid ${(country === 'A' || country === 'HR') ? 'transparent' : styles.borderColor}`,
+              border: `${borderWidth}px solid ${plateBorderColor}`,
               borderRadius: `${8 * scale}px`,
+              padding: `${framePadding}px`,
               fontFamily: getFontFamily(),
               transformStyle: 'preserve-3d',
               overflow: 'hidden',
@@ -523,23 +524,22 @@ const LicensePlate = forwardRef<HTMLDivElement, LicensePlateProps>(
                   )}
                 </div>
               </div>
-            </div>
-          ) : (
-            /* Standard EU Band */
-            <div style={{
-              position: 'absolute',
-              left: 0,
-              top: (country === 'A' || country === 'HR') ? `${redStripeHeight * 3}px` : 0,
-              bottom: (country === 'A' || country === 'HR') ? `${redStripeHeight * 3}px` : 0,
-              width: `${euBandWidth}px`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: (country === 'A' || country === 'HR') ? `0 ${3 * scale}px` : '0',
-              zIndex: 2,
-            }}>
-              <EUBand scale={scale} countryCode={country} height={(country === 'A' || country === 'HR') ? '100%' : undefined} noBorderRadius={(country === 'A' || country === 'HR')} showDinGepruft={country === 'D'} borderRadius={5} />
-            </div>
+            ) : (
+              /* Standard EU Band */
+              <div style={{
+                position: 'absolute',
+                left: `${framePadding}px`,
+                top: (country === 'A' || country === 'HR') ? `${redStripeHeight * 3 + framePadding}px` : `${framePadding}px`,
+                bottom: (country === 'A' || country === 'HR') ? `${redStripeHeight * 3 + framePadding}px` : `${framePadding}px`,
+                width: `${euBandWidth}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2,
+              }}>
+                <EUBand scale={scale} countryCode={country} height="100%" noBorderRadius={(country === 'A' || country === 'HR')} showDinGepruft={country === 'D'} borderRadius={5} />
+              </div>
+            )
           )}
           
           {/* UK Band - with flag and UK text, green for EV */}
